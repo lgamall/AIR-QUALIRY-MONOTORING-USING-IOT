@@ -72,7 +72,7 @@ void setup() {
   // delay so that the serial doesn't print random numbers
   delay(1500);
   // print the columns names that will be written in the csv file
-  Serial.println("Date&Time, Temperature, Humidity, LPG, CO, Smoke, AQI, Dust");
+  // Serial.println("Date&Time, Temperature, Humidity, LPG, CO, Smoke, AQI, Dust");
   // set the time between each reading
   time1 = millis();
 
@@ -94,9 +94,59 @@ void loop() {
   // Read from the dht sensor the temp and humid
   tempc = HT.readTemperature();
   humid = HT.readHumidity(); 
+  sensorvalue = analogRead(mq135Pin);
 
+  float* values= mq2.read(false); //set it false if you don't want to print the values in the Serial
+  //lpg = values[0];
+  lpg = mq2.readLPG();
+  //co = values[1];
+  co = mq2.readCO();
+  //smoke = values[2];
+  smoke = mq2.readSmoke();
 
+  // THE DUST SENSOR
+  // turn of the led of the dust led sensor
+  digitalWrite(ledpower, LOW);
+  // delay for the sensor to measure the particles in the air 
+  delayMicroseconds(280); 
+  //delta time 40 sleep time 9680
+  // read the voltage outputed from the sensor
+  vomesure = analogRead(dustmesurepin);
+  delayMicroseconds(40);
+  // turn on the led
+  digitalWrite(ledpower, HIGH);
+  delayMicroseconds(9680);
+  // convert the value from voltage to analog
+  calcvoltage = vomesure * (5.0 / 1024.0);
+  // the eq of the dust
+  dust = 170 * calcvoltage - 0.1;
   // float rzero = mq135_sensor.getRZero();
+  // print to the serial that saves the readings to the gile evrey 1s but it will be longer becuase of the delay of the previous code
+  if((unsigned long)millis() - time1 > 1000)
+  {
+    // print coma for the formatting of the csv file
+    Serial.print(",");
+    // print to the serial the value of temperature
+    Serial.print(tempc);
+    Serial.print(",");
+    // the humidity
+    Serial.print(humid);
+    Serial.print(",");
+    // the gases lpg, co, smoke
+    Serial.print(lpg);
+    Serial.print(",");
+    Serial.print(co);
+    Serial.print(",");
+    Serial.print(smoke);
+    Serial.print(",");
+    // the AQI
+    Serial.print(sensorvalue);
+    Serial.print(",");
+    // the dust but print it in a new line so that the next reading is written on the next row
+    Serial.println(dust);
+    // reset the time
+    time1 = millis();
+  }
   // float correctedRZero = mq135_sensor.getCorrectedRZero(tempc, humid);
   // float resistance = mq135_sensor.getResistance();
   // float ppm = mq135_sensor.getPPM();
@@ -139,7 +189,6 @@ void loop() {
   // delay(50);             
 
   // get the output value of the mq135 sensor
-  sensorvalue = analogRead(mq135Pin);
 
   // co2lvl = sensorvalue - 120;
   // co2lvl = map(co2lvl, 0, 1024, 400, 5000);
@@ -180,7 +229,7 @@ void loop() {
 
 
   // if the humidity is more than 80% turn on the buzzer
-  if (humid > 80.00){
+  if (humid > 60.00){
   // turn on the buzzer with value of 10
   analogWrite(buzzer, 10);
   // keep the buzzer running for 3s
@@ -205,13 +254,6 @@ void loop() {
 
   delay(4000);  // Wait for a moment to make the display readable
 
-  float* values= mq2.read(false); //set it false if you don't want to print the values in the Serial
-  //lpg = values[0];
-  lpg = mq2.readLPG();
-  //co = values[1];
-  co = mq2.readCO();
-  //smoke = values[2];
-  smoke = mq2.readSmoke();
   // clear the screen and print the values of lpg co and smoke
   lcd.setCursor(0,0);
   lcd.print("                ");
@@ -277,14 +319,14 @@ void loop() {
   lcd.print("          ");
 
   // if the aqi is more than 30 and less than 60 then the air quality is moderate
-  if (sensorvalue > 30.00 && sensorvalue < 60.00){
+  if (sensorvalue > 100.00 && sensorvalue <= 150.00){
     lcd.setCursor(0, 1);
     lcd.print("Moderate");
     // alert the user for 3s
     analogWrite(buzzer, 5);
     delay(3000);
     analogWrite(buzzer, 0);
-  } else if (sensorvalue > 60.00){
+  } else if (sensorvalue > 150.00){
     // if the value is more than 60 then the air quality is bad and aleart the user
     lcd.setCursor(0, 1);
     lcd.print("Bad!!");
@@ -292,7 +334,7 @@ void loop() {
     analogWrite(buzzer, 10);
     delay(4000);
     analogWrite(buzzer, 0);
-  } else if (sensorvalue < 30.00 && sensorvalue > 0.00){
+  } else if (sensorvalue <= 100.00 && sensorvalue > 0.00){
     // if the value is less than 30 then the air is good
     lcd.setCursor(0, 1);
     lcd.print("Good!!");
@@ -303,22 +345,6 @@ void loop() {
   lcd.setCursor(0, 0);
   lcd.print("                 ");
 
-  // THE DUST SENSOR
-  // turn of the led of the dust led sensor
-  digitalWrite(ledpower, LOW);
-  // delay for the sensor to measure the particles in the air 
-  delayMicroseconds(280); 
-  //delta time 40 sleep time 9680
-  // read the voltage outputed from the sensor
-  vomesure = analogRead(dustmesurepin);
-  delayMicroseconds(40);
-  // turn on the led
-  digitalWrite(ledpower, HIGH);
-  delayMicroseconds(9680);
-  // convert the value from voltage to analog
-  calcvoltage = vomesure * (5.0 / 1024.0);
-  // the eq of the dust
-  dust = 170 * calcvoltage - 0.1;
   // print the dust value to the screen
   lcd.setCursor(0, 0);
   lcd.print("             ");
@@ -329,15 +355,15 @@ void loop() {
   lcd.print("                 ");
   lcd.setCursor(0, 1);
   // the values sheet of the sensor
-  if (dust < 50.00){
+  if (dust <= 50.00){
     lcd.print("Excelent");
-  } else if (dust > 51.00 && dust < 100.00){
+  } else if (dust >= 51.00 && dust <= 100.00){
     lcd.print("Average");
-  } else if (dust > 101.00 && dust < 150.00){
+  } else if (dust >= 101.00 && dust <= 150.00){
     lcd.print("Light");
-  } else if (dust > 151.00 && dust < 200.00){
+  } else if (dust >= 151.00 && dust <= 200.00){
     lcd.print("Moderate");
-  } else if (dust > 201.00 && dust < 300.00){
+  } else if (dust >= 201.00 && dust <= 300.00){
     lcd.print("Heavy!!");
     analogWrite(buzzer, 10);
     delay(4000);
@@ -350,32 +376,6 @@ void loop() {
   }
   delay(4000);
 
-  // print to the serial that saves the readings to the gile evrey 1s but it will be longer becuase of the delay of the previous code
-  if((unsigned long)millis() - time1 > 1000)
-  {
-    // print coma for the formatting of the csv file
-    Serial.print(",");
-    // print to the serial the value of temperature
-    Serial.print(tempc);
-    Serial.print(",");
-    // the humidity
-    Serial.print(humid);
-    Serial.print(",");
-    // the gases lpg, co, smoke
-    Serial.print(lpg);
-    Serial.print(",");
-    Serial.print(co);
-    Serial.print(",");
-    Serial.print(smoke);
-    Serial.print(",");
-    // the AQI
-    Serial.print(sensorvalue);
-    Serial.print(",");
-    // the dust but print it in a new line so that the next reading is written on the next row
-    Serial.println(dust);
-    // reset the time
-    time1 = millis();
-  }
 
 }
 

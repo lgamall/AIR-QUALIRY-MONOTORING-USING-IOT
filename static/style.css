@@ -1,0 +1,44 @@
+/* -----
+SVG Icons - svgicons.sparkk.fr
+----- */
+
+.svg-icon {
+    width: 1em;
+    height: 1em;
+  }
+  
+  .svg-icon path,
+  .svg-icon polygon,
+  .svg-icon rect {
+    fill: black;
+  }
+  
+  .svg-icon circle {
+    stroke: black;
+    stroke-width: 1;
+  }
+
+  body {
+    font-family: "Concert One", sans-serif;
+  }
+  
+
+
+  .concert-one-regular {
+    font-family: "Concert One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+
+  .alert {
+    color: red;
+  }
+  
+  .safe {
+    color: rgb(52, 239, 52);
+  }
+
+  .meduim {
+    color: orange;
+  }

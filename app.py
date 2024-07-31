@@ -11,13 +11,20 @@ def index():
     return render_template('index.html')
 
 @app.route('/data')
+# gets the data from the arduino's serial
 def get_data():
+    # wait till the data is written in the serial
     if ser.in_waiting > 0:
+        # read the text
         data = ser.readline().decode('utf-8').strip()
         # print(data)
+
+        # split the data
         sensor_values = parse_data(data)
         if sensor_values:
+            # unpack the data
             temperature, humidity, lpg, co, smoke, aqi, dust = sensor_values
+            # jsonify it
             return jsonify(
                 temperature=temperature,
                 humidity=humidity,
@@ -27,6 +34,7 @@ def get_data():
                 aqi=aqi,
                 dust=dust
             )
+    # if there's no data return none
     return jsonify(
         temperature=None,
         humidity=None,
@@ -37,10 +45,9 @@ def get_data():
         dust=None
     )
 
+# the data is in the format of "temp,humid,etc"
 def parse_data(data):
     try:
-        # Strip parentheses and split by comma
-        # data = data.strip('()')
         values = data.split(',')
         # Convert string values to floats
         temperature = float(values[1])

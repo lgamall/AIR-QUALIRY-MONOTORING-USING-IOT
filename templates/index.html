@@ -19,10 +19,15 @@
     </style>
     <title>Arduino Data</title>
     <script>
+      // The function that gets the data form the backend and it will run in the background
         async function fetchData() {
+            // wait until the data is fetched from the arduino
             const response = await fetch('/data');
+            // jsonify the returned data
             const data = await response.json();
+            // display the data on the console for debuging
             console.log(data);
+            // if any of the returned data was empty just keep displaying the old readings and if not then update the data
             if (data.temperature !== null && data.humidity !== null && data.lpg !== null && 
             data.co !== null && data.smoke !== null && data.aqi !== null && data.dust !== null) {
                 document.getElementById('temperature').innerText = data.temperature;
@@ -32,8 +37,10 @@
                 document.getElementById('smoke').innerText = data.smoke;
                 document.getElementById('aqi').innerText = data.aqi;
                 document.getElementById('dust').innerText = data.dust;
-
+              
+                // if temp was higher than 50
                 if (data.temperature >= 50){
+                  // get the element of temp and make change the css and logo to alert the user
                   var element = document.getElementById("temp");
                   element.className = "card-text alert";
                   element.innerHTML = `WARNING! TEMPERATURE IS HIGH <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="red" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>`;
@@ -159,10 +166,11 @@
             }
           
         }
-
+        // call this funciton every 8 seconds
         setInterval(fetchData, 8000);
     </script>
 </head>
+<!-- execute the script once the body is loaded -->
 <body onload="fetchData()">
   
   <nav class="navbar navbar-dark bg-dark fixed-top">
